@@ -8,7 +8,7 @@ pub trait Get {
   type Value<'a>
   where
     Self: 'a;
-  fn get<'a, 'b>(&'a self, k: Self::Key<'b>) -> Option<Self::Value<'a>>;
+  fn get<'a>(&'a self, k: Self::Key<'a>) -> Option<Self::Value<'a>>;
 }
 
 impl<'g, G: Get> Get for &'g G {
@@ -21,7 +21,7 @@ impl<'g, G: Get> Get for &'g G {
     Self: 'a,
   = <G as Get>::Value<'a>;
 
-  fn get<'a, 'b>(&'a self, k: Self::Key<'b>) -> Option<Self::Value<'a>> {
+  fn get<'a>(&'a self, k: Self::Key<'a>) -> Option<Self::Value<'a>> {
     <G as Get>::get(self, k)
   }
 }
@@ -71,21 +71,6 @@ impl<V, const N: usize> Get for [V; N] {
   }
 }
 
-// impl<V, const N: usize> Get for &[V; N] {
-//   type Key<'a>
-//   where
-//     Self: 'a,
-//   = usize;
-//   type Value<'a>
-//   where
-//     Self: 'a,
-//   = &'a V;
-
-//   fn get<'a>(&'a self, k: Self::Key<'a>) -> Option<Self::Value<'a>> {
-//     <[V]>::get(&self[..], k)
-//   }
-// }
-
 impl<V> Get for Vec<V> {
   type Key<'a>
   where
@@ -96,7 +81,7 @@ impl<V> Get for Vec<V> {
     Self: 'a,
   = &'a V;
 
-  fn get<'a, 'b>(&'a self, k: Self::Key<'b>) -> Option<Self::Value<'a>> {
+  fn get<'a>(&'a self, k: Self::Key<'a>) -> Option<Self::Value<'a>> {
     <[V]>::get(self, k)
   }
 }
@@ -112,7 +97,7 @@ impl<V> Get for std::collections::VecDeque<V> {
     Self: 'a,
   = &'a V;
 
-  fn get<'a, 'b>(&'a self, k: Self::Key<'b>) -> Option<Self::Value<'a>> {
+  fn get<'a>(&'a self, k: Self::Key<'a>) -> Option<Self::Value<'a>> {
     std::collections::VecDeque::get(self, k)
   }
 }
@@ -128,7 +113,7 @@ impl<V> Get for std::collections::LinkedList<V> {
     Self: 'a,
   = &'a V;
 
-  fn get<'a, 'b>(&'a self, k: Self::Key<'b>) -> Option<Self::Value<'a>> {
+  fn get<'a>(&'a self, k: Self::Key<'a>) -> Option<Self::Value<'a>> {
     self.iter().skip(k).next()
   }
 }
@@ -144,7 +129,7 @@ impl<K: Ord, V> Get for std::collections::BTreeMap<K, V> {
     Self: 'a,
   = &'a V;
 
-  fn get<'a, 'b>(&'a self, k: Self::Key<'b>) -> Option<Self::Value<'a>> {
+  fn get<'a>(&'a self, k: Self::Key<'a>) -> Option<Self::Value<'a>> {
     std::collections::BTreeMap::get(self, &k)
   }
 }
@@ -160,7 +145,7 @@ impl<K: Ord> Get for std::collections::BTreeSet<K> {
     Self: 'a,
   = &'a K;
 
-  fn get<'a, 'b>(&'a self, k: Self::Key<'b>) -> Option<Self::Value<'a>> {
+  fn get<'a>(&'a self, k: Self::Key<'a>) -> Option<Self::Value<'a>> {
     std::collections::BTreeSet::get(self, &k)
   }
 }
@@ -176,7 +161,7 @@ impl<K: Eq + Hash, V> Get for std::collections::HashMap<K, V> {
     Self: 'a,
   = &'a V;
 
-  fn get<'a, 'b>(&'a self, k: Self::Key<'b>) -> Option<Self::Value<'a>> {
+  fn get<'a>(&'a self, k: Self::Key<'a>) -> Option<Self::Value<'a>> {
     std::collections::HashMap::get(self, &k)
   }
 }
@@ -192,7 +177,7 @@ impl<K: Eq + Hash> Get for std::collections::HashSet<K> {
     Self: 'a,
   = &'a K;
 
-  fn get<'a, 'b>(&'a self, k: Self::Key<'b>) -> Option<Self::Value<'a>> {
+  fn get<'a>(&'a self, k: Self::Key<'a>) -> Option<Self::Value<'a>> {
     std::collections::HashSet::get(self, &k)
   }
 }
@@ -208,7 +193,7 @@ impl<K: Eq + Hash, V> Get for dashmap::DashMap<K, V> {
     Self: 'a,
   = dashmap::mapref::one::Ref<'a, K, V>;
 
-  fn get<'a, 'b>(&'a self, k: Self::Key<'b>) -> Option<Self::Value<'a>> {
+  fn get<'a>(&'a self, k: Self::Key<'a>) -> Option<Self::Value<'a>> {
     dashmap::DashMap::get(self, &k)
   }
 }
@@ -224,7 +209,7 @@ impl<K: Eq + Hash> Get for dashmap::DashSet<K> {
     Self: 'a,
   = dashmap::setref::one::Ref<'a, K>;
 
-  fn get<'a, 'b>(&'a self, k: Self::Key<'b>) -> Option<Self::Value<'a>> {
+  fn get<'a>(&'a self, k: Self::Key<'a>) -> Option<Self::Value<'a>> {
     dashmap::DashSet::get(self, &k)
   }
 }
@@ -240,7 +225,7 @@ impl Get for serde_json::Value {
     Self: 'a,
   = &'a serde_json::Value;
 
-  fn get<'a, 'b>(&'a self, k: Self::Key<'b>) -> Option<Self::Value<'a>> {
+  fn get<'a>(&'a self, k: Self::Key<'a>) -> Option<Self::Value<'a>> {
     match self {
       serde_json::Value::Object(o) => o.get(k),
       _ => None,
@@ -259,7 +244,7 @@ impl Get for simd_json::BorrowedValue<'_> {
     Self: 'a,
   = &'a simd_json::BorrowedValue<'a>;
 
-  fn get<'a, 'b>(&'a self, k: Self::Key<'b>) -> Option<Self::Value<'a>> {
+  fn get<'a>(&'a self, k: Self::Key<'a>) -> Option<Self::Value<'a>> {
     match self {
       simd_json::BorrowedValue::Object(o) => o.get(k),
       _ => None,
@@ -278,7 +263,7 @@ impl Get for simd_json::OwnedValue {
     Self: 'a,
   = &'a simd_json::OwnedValue;
 
-  fn get<'a, 'b>(&'a self, k: Self::Key<'b>) -> Option<Self::Value<'a>> {
+  fn get<'a>(&'a self, k: Self::Key<'a>) -> Option<Self::Value<'a>> {
     match self {
       simd_json::OwnedValue::Object(o) => o.get(k),
       _ => None,
@@ -297,7 +282,7 @@ impl<V> Get for slab::Slab<V> {
     Self: 'a,
   = &'a V;
 
-  fn get<'a, 'b>(&'a self, k: Self::Key<'b>) -> Option<Self::Value<'a>> {
+  fn get<'a>(&'a self, k: Self::Key<'a>) -> Option<Self::Value<'a>> {
     slab::Slab::get(self, k)
   }
 }
