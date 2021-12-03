@@ -1,0 +1,3 @@
+# Collectivity
+
+Generic collection traits
