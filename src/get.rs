@@ -1,5 +1,5 @@
 #[cfg(feature = "std")]
-use core::{cmp::Ord, hash::Hash};
+use core::hash::Hash;
 
 pub trait Get {
   type Key<'a>
@@ -11,7 +11,37 @@ pub trait Get {
   fn get<'a, 'b>(&'a self, k: Self::Key<'b>) -> Option<Self::Value<'a>>;
 }
 
+impl<'g, G: Get> Get for &'g G {
+  type Key<'a>
+  where
+    Self: 'a,
+  = <G as Get>::Key<'a>;
+  type Value<'a>
+  where
+    Self: 'a,
+  = <G as Get>::Value<'a>;
+
+  fn get<'a, 'b>(&'a self, k: Self::Key<'b>) -> Option<Self::Value<'a>> {
+    <G as Get>::get(self, k)
+  }
+}
+
 impl<V> Get for [V] {
+  type Key<'a>
+  where
+    Self: 'a,
+  = usize;
+  type Value<'a>
+  where
+    Self: 'a,
+  = &'a V;
+
+  fn get<'a>(&'a self, k: Self::Key<'a>) -> Option<Self::Value<'a>> {
+    <[V]>::get(self, k)
+  }
+}
+
+impl<V> Get for &[V] {
   type Key<'a>
   where
     Self: 'a,
@@ -41,6 +71,21 @@ impl<V, const N: usize> Get for [V; N] {
   }
 }
 
+// impl<V, const N: usize> Get for &[V; N] {
+//   type Key<'a>
+//   where
+//     Self: 'a,
+//   = usize;
+//   type Value<'a>
+//   where
+//     Self: 'a,
+//   = &'a V;
+
+//   fn get<'a>(&'a self, k: Self::Key<'a>) -> Option<Self::Value<'a>> {
+//     <[V]>::get(&self[..], k)
+//   }
+// }
+
 impl<V> Get for Vec<V> {
   type Key<'a>
   where
@@ -56,6 +101,7 @@ impl<V> Get for Vec<V> {
   }
 }
 
+#[cfg(feature = "std")]
 impl<V> Get for std::collections::VecDeque<V> {
   type Key<'a>
   where
@@ -68,6 +114,22 @@ impl<V> Get for std::collections::VecDeque<V> {
 
   fn get<'a, 'b>(&'a self, k: Self::Key<'b>) -> Option<Self::Value<'a>> {
     std::collections::VecDeque::get(self, k)
+  }
+}
+
+#[cfg(feature = "std")]
+impl<V> Get for std::collections::LinkedList<V> {
+  type Key<'a>
+  where
+    Self: 'a,
+  = usize;
+  type Value<'a>
+  where
+    Self: 'a,
+  = &'a V;
+
+  fn get<'a, 'b>(&'a self, k: Self::Key<'b>) -> Option<Self::Value<'a>> {
+    self.iter().skip(k).next()
   }
 }
 
@@ -250,6 +312,10 @@ mod tests {
     assert_eq!(<Vec<()> as Get>::get(&vec![], 0), None);
     assert_eq!(
       <std::collections::VecDeque<()> as Get>::get(&Default::default(), 0),
+      None
+    );
+    assert_eq!(
+      <std::collections::LinkedList<()> as Get>::get(&Default::default(), 0),
       None
     );
     assert_eq!(

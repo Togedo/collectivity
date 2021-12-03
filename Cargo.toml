@@ -1,7 +1,7 @@
 [package]
 name = "collectivity"
 description = "Generic collection traits"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2021"
 license = "MIT"
 
@@ -11,10 +11,10 @@ authors = ["James Daab <james@togedo.com>"]
 
 [dependencies]
 dashmap = { version = "4.0.2", optional = true }
-smallvec = { version = "1.6.1", optional = true }
-slab = { version = "0.4.2", optional = true }
 serde_json = { version = "1.0.64", optional = true }
 simd-json = { version = "0.4.3", optional = true }
+slab = { version = "0.4.2", optional = true }
+smallvec = { version = "1.6.1", optional = true }
 
 [features]
 default = ["std"]
