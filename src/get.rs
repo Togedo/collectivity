@@ -9,6 +9,9 @@ pub trait Get {
   where
     Self: 'a;
   fn get<'a>(&'a self, k: Self::Key<'a>) -> Option<Self::Value<'a>>;
+  fn contains<'a>(&'a self, k: Self::Key<'a>) -> bool {
+    self.get(k).is_some()
+  }
 }
 
 impl<'g, G: Get> Get for &'g G {
