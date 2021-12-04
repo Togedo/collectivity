@@ -4,36 +4,6 @@ use std::{
   hash::Hash,
 };
 
-// macro_rules! insert {
-//   ([$($l:lifetime, )*$($x:ident$(: $bound:tt $(+ $others:tt )*)?),*], $t:ty, $k:ty, $v:ty, $b:item) => {
-//     impl<$($l, )*$($x$(: $bound $(+ $others)*)?),*> Insert for $t {
-//       type Key<'a>
-//       where
-//         Self: 'a,
-//       = $k;
-//       type Value<'a>
-//       where
-//         Self: 'a,
-//       = $v;
-//       $b
-//     }
-//   };
-// }
-
-// macro_rules! basic_insert {
-//   ($t:ty, $k:ty) => {
-//     insert!(
-//       [V],
-//       $t,
-//       $k,
-//       V,
-//       fn insert<'a>(&'a mut self, k: $k, v: V) {
-//         <$t>::insert(self, k, v)
-//       }
-//     );
-//   };
-// }
-
 pub trait Insert<K, V> {
   fn insert(&mut self, k: K, v: V);
 }
@@ -41,6 +11,12 @@ pub trait Insert<K, V> {
 impl<'i, K, V, I: Insert<K, V>> Insert<K, V> for &'i mut I {
   fn insert<'a>(&'a mut self, k: K, v: V) {
     <I as Insert<K, V>>::insert(self, k, v)
+  }
+}
+
+impl<V, const N: usize> Insert<usize, V> for [V; N] {
+  fn insert(&mut self, k: usize, v: V) {
+    self[k] = v
   }
 }
 

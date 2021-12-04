@@ -295,9 +295,11 @@ mod tests {
   use super::*;
   #[test]
   fn calls() {
-    assert_eq!(<[()] as Get>::get(&[], 0), None);
+    assert_eq!(<[i32] as Get>::get(&[], 1), None);
+    assert_eq!(<[i32] as Get>::get(&[0, 1], 1), Some(&1));
     assert_eq!(<[usize; 0] as Get>::get(&[0; 0], 0), None);
-    assert_eq!(<Vec<()> as Get>::get(&vec![], 0), None);
+    assert_eq!(<[usize; 1] as Get>::get(&[0; 1], 0), Some(&0));
+    assert_eq!(<Vec<i32> as Get>::get(&vec![10], 0), Some(&10));
     assert_eq!(
       <std::collections::VecDeque<()> as Get>::get(&Default::default(), 0),
       None

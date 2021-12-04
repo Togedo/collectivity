@@ -29,17 +29,22 @@ The `Insert` trait provides the `insert` method, which insert a provided value a
 use std::borrow::Cow;
 use collectivity::Insert;
 
-fn insert<'a>(
-  mut data: &mut impl Insert<usize, Cow<'a, str>>,
+fn insert<'a, V>(
+  col: &mut impl Insert<usize, V>,
   pos: usize,
-  val: Cow<'a, str>
+  val: V
 ) {
-  data.insert(pos, val);
+  col.insert(pos, val);
 }
 
 let mut v = vec![];
-let s = "abc".into();
+let s = Cow::Borrowed("abc");
 insert(&mut v, 0, s);
+assert_eq!(v[0], Cow::Borrowed("abc"));
+
+let mut v = [0, 1];
+insert(&mut v, 0, 1);
+assert_eq!(v[0], 1);
 ```
 
 ## Len
@@ -51,10 +56,38 @@ The `Len` trait provides the `len` method, which returns the number of entries s
 use collectivity::Len;
 
 fn len(
-  data: impl Len
+  col: &impl Len
 ) -> usize {
-  data.len()
+  col.len()
 }
+
+assert_eq!(len(&std::collections::HashSet::<()>::new()), 0);
+assert_eq!(len(&vec![1, 2, 3]), 3);
+```
+
+## Push
+
+The `Push` trait provides the `push` method, which adds the provided value to a collection.
+
+### Examples
+```rust
+use std::collections::LinkedList;
+use collectivity::{Get, Push};
+
+fn push(
+  col: &mut impl Push<i32>,
+  v: i32
+) {
+  col.push(v);
+}
+
+let mut v = vec![];
+push(&mut v, 0);
+assert_eq!(v[0], 0);
+
+let mut l = LinkedList::new();
+push(&mut l, 0);
+assert_eq!(l.get(0), Some(&0));
 ```
 
 License: MIT
