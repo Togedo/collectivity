@@ -25,13 +25,20 @@ The `Insert` trait provides the `insert` method, which insert a provided value a
 
 ## Examples
 ```
+use std::borrow::Cow;
 use collectivity::Insert;
 
-fn insert(
-  mut data: impl for<'a> Insert<Key<'a> = usize, Value<'a> = String>
+fn insert<'a>(
+  mut data: &mut impl Insert<usize, Cow<'a, str>>,
+  pos: usize,
+  val: Cow<'a, str>
 ) {
-  data.insert(0, "abc".into());
+  data.insert(pos, val);
 }
+
+let mut v = vec![];
+let s = "abc".into();
+insert(&mut v, 0, s);
 ```
 
 # Len
