@@ -42,7 +42,7 @@ The `Len` trait provides the `len` method, which returns the number of entries s
 ```
 use collectivity::Len;
 
-fn check_len(
+fn len(
   data: impl Len
 ) -> usize {
   data.len()
