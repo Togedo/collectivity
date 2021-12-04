@@ -1,7 +1,23 @@
 #[cfg(feature = "std")]
 use core::hash::Hash;
 
+/// Provides information about the number of entries in a collection.
+///
+/// ## Examples
+/// ```
+/// use collectivity::Len;
+///
+/// fn len(
+///   col: &impl Len
+/// ) -> usize {
+///   col.len()
+/// }
+///
+/// assert_eq!(len(&std::collections::HashSet::<()>::new()), 0);
+/// assert_eq!(len(&vec![1, 2, 3]), 3);
+/// ```
 pub trait Len {
+  /// Returns the number of entries in the collection
   fn len(&self) -> usize;
 }
 
