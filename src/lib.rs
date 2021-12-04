@@ -11,12 +11,11 @@ The `Get` trait provides safe access to a value at a specified position. The tra
 ```
 use collectivity::Get;
 
-fn multiply_at(
+fn get(
   data: impl for<'a> Get<Key<'a> = usize, Value<'a> = &'a usize>,
   pos: usize,
-  multiplier: usize,
 ) -> Option<usize> {
-  data.get(pos).map(|v| v * multiplier)
+  data.get(pos).map(|v| *v)
 }
 ```
 
