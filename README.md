@@ -26,13 +26,20 @@ The `Insert` trait provides the `insert` method, which insert a provided value a
 
 ### Examples
 ```rust
+use std::borrow::Cow;
 use collectivity::Insert;
 
-fn insert(
-  mut data: impl for<'a> Insert<Key<'a> = usize, Value<'a> = String>
+fn insert<'a>(
+  mut data: &mut impl Insert<usize, Cow<'a, str>>,
+  pos: usize,
+  val: Cow<'a, str>
 ) {
-  data.insert(0, "abc".into());
+  data.insert(pos, val);
 }
+
+let mut v = vec![];
+let s = "abc".into();
+insert(&mut v, 0, s);
 ```
 
 ## Len
@@ -43,7 +50,7 @@ The `Len` trait provides the `len` method, which returns the number of entries s
 ```rust
 use collectivity::Len;
 
-fn check_len(
+fn len(
   data: impl Len
 ) -> usize {
   data.len()
