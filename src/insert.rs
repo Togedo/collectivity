@@ -1,4 +1,4 @@
-use crate::{Safe, Unsafe};
+use crate::{Safe, SafetyMarker, Unsafe};
 #[cfg(feature = "std")]
 use std::{
   collections::{BTreeMap, BTreeSet, HashMap, HashSet, LinkedList, VecDeque},
@@ -29,7 +29,9 @@ use std::{
 /// insert(&mut v, 0, 1);
 /// assert_eq!(v[0], 1);
 /// ```
-pub trait Insert<K, V, Safety = Unsafe> {
+pub trait Insert<K, V> {
+  /// Indicates whether the `insert` method may panic in a particular implementation.
+  type Safety: SafetyMarker;
   /// Inserts value `v` at key `k`.
   ///
   /// # Panics
@@ -38,39 +40,45 @@ pub trait Insert<K, V, Safety = Unsafe> {
   fn insert(&mut self, k: K, v: V);
 }
 
-impl<'i, K, V, S, I: Insert<K, V, S>> Insert<K, V, S> for &'i mut I {
+impl<'i, K, V, I: Insert<K, V>> Insert<K, V> for &'i mut I {
+  type Safety = <I as Insert<K, V>>::Safety;
   fn insert<'a>(&'a mut self, k: K, v: V) {
-    <I as Insert<K, V, S>>::insert(self, k, v)
+    <I as Insert<K, V>>::insert(self, k, v)
   }
 }
 
-impl<V, const N: usize> Insert<usize, V, Unsafe> for [V; N] {
+impl<V, const N: usize> Insert<usize, V> for [V; N] {
+  type Safety = Unsafe;
   fn insert(&mut self, k: usize, v: V) {
     self[k] = v
   }
 }
 
-impl<V> Insert<usize, V, Unsafe> for [V] {
+impl<V> Insert<usize, V> for [V] {
+  type Safety = Unsafe;
   fn insert(&mut self, k: usize, v: V) {
     self[k] = v
   }
 }
 
-impl<V> Insert<usize, V, Unsafe> for Vec<V> {
+impl<V> Insert<usize, V> for Vec<V> {
+  type Safety = Unsafe;
   fn insert(&mut self, k: usize, v: V) {
     self.insert(k, v)
   }
 }
 
 #[cfg(feature = "std")]
-impl<V> Insert<usize, V, Unsafe> for VecDeque<V> {
+impl<V> Insert<usize, V> for VecDeque<V> {
+  type Safety = Unsafe;
   fn insert(&mut self, k: usize, v: V) {
     self.insert(k, v)
   }
 }
 
 #[cfg(feature = "std")]
-impl<V> Insert<usize, V, Unsafe> for LinkedList<V> {
+impl<V> Insert<usize, V> for LinkedList<V> {
+  type Safety = Unsafe;
   fn insert(&mut self, k: usize, v: V) {
     let mut rest = self.split_off(k);
     self.push_back(v);
@@ -79,28 +87,32 @@ impl<V> Insert<usize, V, Unsafe> for LinkedList<V> {
 }
 
 #[cfg(feature = "std")]
-impl<K: Ord, V> Insert<K, V, Safe> for BTreeMap<K, V> {
+impl<K: Ord, V> Insert<K, V> for BTreeMap<K, V> {
+  type Safety = Safe;
   fn insert(&mut self, k: K, v: V) {
     self.insert(k, v);
   }
 }
 
 #[cfg(feature = "std")]
-impl<K: Ord> Insert<K, (), Safe> for BTreeSet<K> {
+impl<K: Ord> Insert<K, ()> for BTreeSet<K> {
+  type Safety = Safe;
   fn insert(&mut self, k: K, _v: ()) {
     self.insert(k);
   }
 }
 
 #[cfg(feature = "std")]
-impl<K: Eq + Hash, V> Insert<K, V, Safe> for HashMap<K, V> {
+impl<K: Eq + Hash, V> Insert<K, V> for HashMap<K, V> {
+  type Safety = Safe;
   fn insert(&mut self, k: K, v: V) {
     self.insert(k, v);
   }
 }
 
 #[cfg(feature = "std")]
-impl<K: Eq + Hash> Insert<K, (), Safe> for HashSet<K> {
+impl<K: Eq + Hash> Insert<K, ()> for HashSet<K> {
+  type Safety = Safe;
   fn insert(&mut self, k: K, _v: ()) {
     self.insert(k);
   }
@@ -110,14 +122,16 @@ impl<K: Eq + Hash> Insert<K, (), Safe> for HashSet<K> {
 use dashmap::{DashMap, DashSet};
 
 #[cfg(feature = "dashmap")]
-impl<K: Eq + Hash, V> Insert<K, V, Safe> for DashMap<K, V> {
+impl<K: Eq + Hash, V> Insert<K, V> for DashMap<K, V> {
+  type Safety = Safe;
   fn insert(&mut self, k: K, v: V) {
     DashMap::insert(self, k, v);
   }
 }
 
 #[cfg(feature = "dashmap")]
-impl<K: Eq + Hash> Insert<K, (), Safe> for DashSet<K> {
+impl<K: Eq + Hash> Insert<K, ()> for DashSet<K> {
+  type Safety = Safe;
   fn insert(&mut self, k: K, _v: ()) {
     DashSet::insert(self, k);
   }
@@ -127,7 +141,8 @@ impl<K: Eq + Hash> Insert<K, (), Safe> for DashSet<K> {
 use serde_json::Value as SeV;
 
 #[cfg(feature = "serde_json")]
-impl Insert<usize, SeV, Unsafe> for SeV {
+impl Insert<usize, SeV> for SeV {
+  type Safety = Unsafe;
   fn insert(&mut self, k: usize, v: SeV) {
     match self {
       SeV::Array(a) => {
@@ -139,7 +154,8 @@ impl Insert<usize, SeV, Unsafe> for SeV {
 }
 
 #[cfg(feature = "serde_json")]
-impl Insert<String, SeV, Safe> for SeV {
+impl Insert<String, SeV> for SeV {
+  type Safety = Unsafe;
   fn insert(&mut self, k: String, v: SeV) {
     match self {
       SeV::Object(o) => {
@@ -154,7 +170,8 @@ impl Insert<String, SeV, Safe> for SeV {
 use simd_json::{cow::Cow, BorrowedValue as SBV, OwnedValue as SOV};
 
 #[cfg(feature = "simd-json")]
-impl<'a> Insert<usize, SBV<'a>, Unsafe> for SBV<'a> {
+impl<'a> Insert<usize, SBV<'a>> for SBV<'a> {
+  type Safety = Unsafe;
   fn insert(&mut self, k: usize, v: SBV<'a>) {
     match self {
       SBV::Array(a) => {
@@ -166,7 +183,8 @@ impl<'a> Insert<usize, SBV<'a>, Unsafe> for SBV<'a> {
 }
 
 #[cfg(feature = "simd-json")]
-impl<'a> Insert<Cow<'a, str>, SBV<'a>, Safe> for SBV<'a> {
+impl<'a> Insert<Cow<'a, str>, SBV<'a>> for SBV<'a> {
+  type Safety = Unsafe;
   fn insert(&mut self, k: Cow<'a, str>, v: SBV<'a>) {
     match self {
       SBV::Object(o) => {
@@ -178,7 +196,8 @@ impl<'a> Insert<Cow<'a, str>, SBV<'a>, Safe> for SBV<'a> {
 }
 
 #[cfg(feature = "simd-json")]
-impl Insert<usize, SOV, Unsafe> for SOV {
+impl Insert<usize, SOV> for SOV {
+  type Safety = Unsafe;
   fn insert(&mut self, k: usize, v: SOV) {
     match self {
       SOV::Array(a) => {
@@ -190,7 +209,8 @@ impl Insert<usize, SOV, Unsafe> for SOV {
 }
 
 #[cfg(feature = "simd-json")]
-impl Insert<String, SOV, Safe> for SOV {
+impl Insert<String, SOV> for SOV {
+  type Safety = Safe;
   fn insert(&mut self, k: String, v: SOV) {
     match self {
       SOV::Object(o) => {
@@ -205,7 +225,8 @@ impl Insert<String, SOV, Safe> for SOV {
 use smallvec::{Array, SmallVec};
 
 #[cfg(feature = "smallvec")]
-impl<V, A: Array<Item = V>> Insert<usize, V, Unsafe> for SmallVec<A> {
+impl<V, A: Array<Item = V>> Insert<usize, V> for SmallVec<A> {
+  type Safety = Unsafe;
   fn insert(&mut self, k: usize, v: V) {
     self.insert(k, v)
   }
@@ -237,16 +258,16 @@ mod tests {
     assert_eq!(v.get(1), Some(&3));
     assert_eq!(v.get(2), Some(&2));
     let mut m = BTreeMap::new();
-    <BTreeMap<i32, i32> as Insert<i32, i32, _>>::insert(&mut m, 0, 1);
+    <BTreeMap<i32, i32> as Insert<i32, i32>>::insert(&mut m, 0, 1);
     assert_eq!(m[&0], 1);
     let mut s = BTreeSet::new();
-    <BTreeSet<i32> as Insert<i32, (), _>>::insert(&mut s, 0, ());
+    <BTreeSet<i32> as Insert<i32, ()>>::insert(&mut s, 0, ());
     assert_eq!(s.get(&0), Some(&0));
     let mut m = HashMap::new();
-    <HashMap<i32, i32> as Insert<i32, i32, _>>::insert(&mut m, 0, 1);
+    <HashMap<i32, i32> as Insert<i32, i32>>::insert(&mut m, 0, 1);
     assert_eq!(m[&0], 1);
     let mut s = HashSet::new();
-    <HashSet<i32> as Insert<i32, (), _>>::insert(&mut s, 0, ());
+    <HashSet<i32> as Insert<i32, ()>>::insert(&mut s, 0, ());
     assert_eq!(s.get(&0), Some(&0));
   }
 }
@@ -258,10 +279,10 @@ mod dashmap_tests {
   #[test]
   fn dashmap() {
     let mut m = DashMap::new();
-    <DashMap<i32, i32> as Insert<i32, i32, _>>::insert(&mut m, 0, 1);
+    <DashMap<i32, i32> as Insert<i32, i32>>::insert(&mut m, 0, 1);
     assert_eq!(m.get(&0).map(|v| v.clone()), Some(1));
     let mut s = DashSet::new();
-    <DashSet<i32> as Insert<i32, (), _>>::insert(&mut s, 0, ());
+    <DashSet<i32> as Insert<i32, ()>>::insert(&mut s, 0, ());
     assert_eq!(s.get(&0).map(|v| v.clone()), Some(0));
   }
 }
@@ -276,7 +297,7 @@ mod serde_json_tests {
     <SeV as Insert<usize, SeV>>::insert(&mut a, 0, SeV::Null);
     assert_eq!(a.get(0), Some(&SeV::Null));
     let mut o = SeV::Object(Default::default());
-    <SeV as Insert<String, SeV, _>>::insert(&mut o, "a".into(), SeV::Null);
+    <SeV as Insert<String, SeV>>::insert(&mut o, "a".into(), SeV::Null);
     assert_eq!(o.get("a"), Some(&SeV::Null));
   }
 }
@@ -295,7 +316,7 @@ mod simd_json_tests {
       Some(&SBV::Static(simd_json::StaticNode::Null))
     );
     let mut o = SBV::Object(Default::default());
-    <SBV as Insert<Cow<'_, str>, SBV, _>>::insert(
+    <SBV as Insert<Cow<'_, str>, SBV>>::insert(
       &mut o,
       "a".into(),
       SBV::Static(simd_json::StaticNode::Null),
@@ -311,7 +332,7 @@ mod simd_json_tests {
       Some(&SOV::Static(simd_json::StaticNode::Null))
     );
     let mut o = SOV::Object(Default::default());
-    <SOV as Insert<String, SOV, _>>::insert(
+    <SOV as Insert<String, SOV>>::insert(
       &mut o,
       "a".into(),
       SOV::Static(simd_json::StaticNode::Null),

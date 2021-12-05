@@ -1,4 +1,4 @@
-use crate::{Safe, Unsafe};
+use crate::{Safe, SafetyMarker, Unsafe};
 #[cfg(feature = "std")]
 use std::collections::{BinaryHeap, LinkedList, VecDeque};
 
@@ -11,8 +11,8 @@ use std::collections::{BinaryHeap, LinkedList, VecDeque};
 /// use std::collections::LinkedList;
 /// use collectivity::{Get, Push};
 ///
-/// fn push<S>(
-///   col: &mut impl Push<i32, S>,
+/// fn push(
+///   col: &mut impl Push<i32>,
 ///   v: i32
 /// ) {
 ///   col.push(v);
@@ -26,7 +26,9 @@ use std::collections::{BinaryHeap, LinkedList, VecDeque};
 /// push(&mut l, 0);
 /// assert_eq!(l.get(0), Some(&0));
 /// ```
-pub trait Push<V, Safety = Unsafe> {
+pub trait Push<V> {
+  /// Indicates whether the `push` method may panic in a particular implementation.
+  type Safety: SafetyMarker = Unsafe;
   /// Adds the provided value to the collection.
   ///
   /// # Panics
@@ -54,14 +56,16 @@ impl<V> Push<V> for VecDeque<V> {
 }
 
 #[cfg(feature = "std")]
-impl<V: Ord> Push<V, Safe> for BinaryHeap<V> {
+impl<V: Ord> Push<V> for BinaryHeap<V> {
+  type Safety = Safe;
   fn push(&mut self, v: V) {
     BinaryHeap::push(self, v)
   }
 }
 
 #[cfg(feature = "std")]
-impl<V> Push<V, Safe> for LinkedList<V> {
+impl<V> Push<V> for LinkedList<V> {
+  type Safety = Safe;
   fn push(&mut self, v: V) {
     self.push_back(v)
   }
