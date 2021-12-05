@@ -1,10 +1,10 @@
 [package]
 name = "collectivity"
 description = "Generic collection traits"
-version = "3.1.0"
+version = "3.2.0"
 edition = "2021"
 license = "MIT"
-documentation = "https://docs.rs/crate/collectivity/0.3.0"
+documentation = "https://docs.rs/crate/collectivity/3.2.0"
 repository = "https://github.com/Togedo/collectivity"
 
 authors = ["James Daab <james@togedo.com>"]
