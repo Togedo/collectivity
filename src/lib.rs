@@ -6,7 +6,7 @@
 //!
 //! Most of the abstracted behaviors are already implemented by the underlying containers. In such cases, the provided trait implementations simply delegate to appropriate methods while standardizing argument and return types.
 //!
-//! **At this point, the crate should be considered experimental. It relies on the unstable `generic_associated_types` and `associated_type_defaults` features. The API might change repidly, but the project conforms to semver and no breaking API changes should be expected within a major release.**
+//! **At this point, the crate should be considered experimental. It relies on the unstable `generic_associated_types` and `associated_type_defaults` features. The API might change rapidly, but the project conforms to semver and no breaking API changes should be expected within a major release.**
 //!
 //! # Example
 //! ```
